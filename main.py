@@ -1,9 +1,12 @@
 from bs4 import BeautifulSoup
 import csv
 import requests
+import os
 
 def load_abbreviations(filename):
-    pass
+    with open(filename, newline='') as csvfile:
+        reader = csv.DictReader(csvfile)
+        return [ (row["Team"], row["Abbreviation"]) for row in reader ]
 
 def parse_row(row):
     return { result.attrs['data-stat']: result.string for result in row.find_all('td') }
@@ -17,7 +20,26 @@ def parse_page(abbreviation):
 
 
 if __name__ == "__main__":
+    aggregate_filename = "results.csv"
+    team_filename = "player.csv"
     abbreviations_filename = "abbreviations.csv"
-    result_filename = "results.csv"
-    results = parse_page('chi')
-    print(sorted(results, reverse=True, key=lambda x: int(x['rec_yds']))[0])
+    abbreviations = load_abbreviations(abbreviations_filename)
+
+    fieldnames = [ k for k in next(parse_page(abbreviations[0][1])) ]
+
+    if not os.path.exists("data"):
+        os.mkdir("data")
+
+    for (team, abbr) in abbreviations:
+        if not os.path.exists(f'data/{team}'):
+            os.mkdir(f'data/{team}')
+
+        results = parse_page(abbr)
+
+        with open(f"data/{team}/player.csv", 'w+', newline='') as csvwriter:
+            writer = csv.DictWriter(csvwriter, fieldnames=fieldnames)
+            writer.writeheader()
+            writer.writerows(results)
+    
+    print("Program complete...")
+

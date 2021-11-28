@@ -30,16 +30,22 @@ if __name__ == "__main__":
     if not os.path.exists("data"):
         os.mkdir("data")
 
-    for (team, abbr) in abbreviations:
-        if not os.path.exists(f'data/{team}'):
-            os.mkdir(f'data/{team}')
+    with open(f'data/{aggregate_filename}', 'w+', newline='') as aggregate_writer:
+        agg_writer = csv.DictWriter(aggregate_writer, fieldnames=fieldnames)
+        agg_writer.writeheader()
 
-        results = parse_page(abbr)
+        for (team, abbr) in abbreviations:
+            if not os.path.exists(f'data/{team}'):
+                os.mkdir(f'data/{team}')
 
-        with open(f"data/{team}/player.csv", 'w+', newline='') as csvwriter:
-            writer = csv.DictWriter(csvwriter, fieldnames=fieldnames)
-            writer.writeheader()
-            writer.writerows(results)
+            results = [ x for x in parse_page(abbr) ]
+
+            with open(f"data/{team}/player.csv", 'w+', newline='') as csvwriter:
+                writer = csv.DictWriter(csvwriter, fieldnames=fieldnames)
+                writer.writeheader()
+
+                writer.writerows(results)
+                agg_writer.writerows(results)
     
     print("Program complete...")
 
